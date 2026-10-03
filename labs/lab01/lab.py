@@ -31,8 +31,15 @@ def consecutive_ints(ints):
 
 
 def median_vs_mean(nums):
-    ...
+    sorted_nums = sorted(nums) # O(nlogn)
+    middle = len(sorted_nums) // 2
 
+    if len(sorted_nums) == 0:
+        return True # per DSC 40B, anything related to an empty array is by convention, vaccuously true
+
+    if len(sorted_nums) % 2 == 0:
+        return (sorted_nums[middle-1] + sorted_nums[middle])/2 == sum(sorted_nums)/len(sorted_nums)
+    return sorted_nums[middle] == sum(sorted_nums)/len(sorted_nums)
 
 # ---------------------------------------------------------------------
 # QUESTION 2
@@ -40,7 +47,7 @@ def median_vs_mean(nums):
 
 
 def n_prefixes(s, n):
-    ...
+    return "".join([s[:i] for i in range(n+1)][::-1])
 
 
 # ---------------------------------------------------------------------
@@ -49,7 +56,12 @@ def n_prefixes(s, n):
 
 
 def exploded_numbers(ints, n):
-    ...
+    pads = len(str(max(ints)+n))
+
+    return [" ".join(
+        [str(num-dx).zfill(pads) for dx in range(n,0,-1)] +
+        [str(num+dx).zfill(pads) for dx in range(n+1)]
+        ) for num in ints]
 
 
 # ---------------------------------------------------------------------
