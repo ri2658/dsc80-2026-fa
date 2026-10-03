@@ -70,7 +70,11 @@ def exploded_numbers(ints, n):
 
 
 def last_chars(fh):
-    ...
+    last_chars_str = ""
+    for line in fh:
+        last_chars_str += line.strip()[-1]
+
+    return last_chars_str
 
 
 # ---------------------------------------------------------------------
@@ -79,10 +83,13 @@ def last_chars(fh):
 
 
 def add_root(A):
-    ...
+    B = A.copy()
+    C = np.arange(B.shape[0])
+    return B + np.sqrt(C)
+
 
 def where_square(A):
-    ...
+    return np.array(np.sqrt(A) == np.floor(np.sqrt(A)))
 
 
 # ---------------------------------------------------------------------
