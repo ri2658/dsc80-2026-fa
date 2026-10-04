@@ -98,8 +98,8 @@ def where_square(A):
 
 
 def filter_cutoff_loop(matrix, cutoff):
-    ...
-
+    masks = [sum([matrix[i][j] for i in range(matrix.shape[0])])/matrix.shape[0] > cutoff for j  in range(matrix.shape[1])]
+    return matrix[:, masks]
 
 # ---------------------------------------------------------------------
 # QUESTION 6
@@ -107,7 +107,8 @@ def filter_cutoff_loop(matrix, cutoff):
 
 
 def filter_cutoff_np(matrix, cutoff):
-    ...
+    masks = np.mean(matrix, axis=0) > cutoff
+    return matrix[:, masks]
 
 
 # ---------------------------------------------------------------------
@@ -116,11 +117,19 @@ def filter_cutoff_np(matrix, cutoff):
 
 
 def growth_rates(A):
-    ...
+    A_padded = np.append(np.append(np.array([0]), A), np.array([0]))
+    B = A_padded.copy()
+    diffs = B[1:] - A_padded[:-1]
+    rate = (diffs/A_padded[:-1])[1:-1]
+    return np.round(rate, 2)
 
 def with_leftover(A):
-    ...
-
+    cumulative_cost = np.cumsum(A)
+    leftovers = 20 - cumulative_cost
+    leftover = leftovers[sum(leftovers > 0) - 1]
+    if leftover == 0:
+        return -1
+    return int(np.ceil(np.min(A)/leftover))
 
 # ---------------------------------------------------------------------
 # QUESTION 8
@@ -128,8 +137,19 @@ def with_leftover(A):
 
 
 def salary_stats(salary):
-    ...
-
+    highest_salary_guy = salary.sort_values(by='Salary', ascending=False)['Player'].iloc[0]
+    highest_salary_guys_team = salary[salary['Player'] == highest_salary_guy]['Team'].iloc[0]
+    statistics = {
+        'num_players': salary.shape[0],
+        'num_steams': salary.groupby('Team').count().shape[0],
+        'total_salary': salary['Salary'].sum(),
+        'highest_salary': highest_salary_guy,
+        'avg_los': salary[['Team', 'Salary']].groupby('Team').mean().loc['Los Angeles Lakers'].iloc[0],
+        'fifth_lowest': salary.sort_values(by='Salary', ascending=True)['Player'].iloc[5],
+        'duplicates': len(np.unique(np.array(list(map(lambda name : name.split()[1], salary['Player'].to_list()))))) != salary.shape[0],
+        'total_highest': salary[salary['Team'] == highest_salary_guys_team]['Salary'].sum()
+    }
+    return pd.Series(statistics)
 
 # ---------------------------------------------------------------------
 # QUESTION 9
