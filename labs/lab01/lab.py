@@ -38,8 +38,9 @@ def median_vs_mean(nums):
         return True # per DSC 40B, anything related to an empty array is by convention, vaccuously true
 
     if len(sorted_nums) % 2 == 0:
-        return (sorted_nums[middle-1] + sorted_nums[middle])/2 == sum(sorted_nums)/len(sorted_nums)
-    return sorted_nums[middle] == sum(sorted_nums)/len(sorted_nums)
+        return (sorted_nums[middle-1] + sorted_nums[middle])/2 <= sum(sorted_nums)/len(sorted_nums)
+    return sorted_nums[middle] <= sum(sorted_nums)/len(sorted_nums)
+
 
 # ---------------------------------------------------------------------
 # QUESTION 2
@@ -117,19 +118,17 @@ def filter_cutoff_np(matrix, cutoff):
 
 
 def growth_rates(A):
-    A_padded = np.append(np.append(np.array([0]), A), np.array([0]))
-    B = A_padded.copy()
-    diffs = B[1:] - A_padded[:-1]
-    rate = (diffs/A_padded[:-1])[1:-1]
+    initial = np.array(A[1:])
+    final = np.array(A[:-1])
+
+    rate = (initial - final)/initial
     return np.round(rate, 2)
 
 def with_leftover(A):
-    cumulative_cost = np.cumsum(A)
-    leftovers = 20 - cumulative_cost
-    leftover = leftovers[sum(leftovers > 0) - 1]
-    if leftover == 0:
-        return -1
-    return int(np.ceil(np.min(A)/leftover))
+    daily_leftover = 20%np.array(A)
+    leftovers = np.cumsum(daily_leftover)
+    days = np.argmax(leftovers >= A) 
+    return days if days != 0 else -1
 
 # ---------------------------------------------------------------------
 # QUESTION 8
@@ -157,4 +156,19 @@ def salary_stats(salary):
 
 
 def parse_malformed(fp):
-    ...
+    with open(fp, 'r') as fh:
+        col_names = fh.readline().split(sep=',')
+        col_names = list(map(lambda names : names.strip(), col_names))
+        rows = []
+        df = pd.DataFrame(columns=col_names)
+        for line in fh:
+            split_lines = line.split(sep=',')
+            a_line = list(map(lambda line : line.replace(",", ""), split_lines))
+            a_line = list(map(lambda line : line.replace("\"", ""), a_line))
+            a_line = list(map(lambda line : line.strip(), a_line))
+            a_line = list(filter(None, a_line))
+            a_row = [a_line[0], a_line[1], float(a_line[2]), float(a_line[3]), f"{a_line[4]},{a_line[5]}"]
+            rows.append(a_row)
+            df = pd.DataFrame(rows, columns=col_names)
+
+    return df
