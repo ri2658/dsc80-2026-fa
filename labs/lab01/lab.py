@@ -73,7 +73,7 @@ def exploded_numbers(ints, n):
 def last_chars(fh):
     last_chars_str = ""
     for line in fh:
-        last_chars_str += line.strip()[-1]
+        last_chars_str += line.rstrip('\n')[-1]
 
     return last_chars_str
 
@@ -118,10 +118,10 @@ def filter_cutoff_np(matrix, cutoff):
 
 
 def growth_rates(A):
-    initial = np.array(A[1:])
-    final = np.array(A[:-1])
+    final = np.array(A[1:])
+    initial = np.array(A[:-1])
 
-    rate = (initial - final)/initial
+    rate = (final - initial)/initial
     return np.round(rate, 2)
 
 def with_leftover(A):
@@ -138,13 +138,15 @@ def with_leftover(A):
 def salary_stats(salary):
     highest_salary_guy = salary.sort_values(by='Salary', ascending=False)['Player'].iloc[0]
     highest_salary_guys_team = salary[salary['Player'] == highest_salary_guy]['Team'].iloc[0]
+    sorted_by_salary = salary.sort_values(by='Salary', ascending=True)
+
     statistics = {
         'num_players': salary.shape[0],
-        'num_steams': salary.groupby('Team').count().shape[0],
+        'num_teams': salary.groupby('Team').count().shape[0],
         'total_salary': salary['Salary'].sum(),
         'highest_salary': highest_salary_guy,
-        'avg_los': salary[['Team', 'Salary']].groupby('Team').mean().loc['Los Angeles Lakers'].iloc[0],
-        'fifth_lowest': salary.sort_values(by='Salary', ascending=True)['Player'].iloc[5],
+        'avg_los': round(salary[['Team', 'Salary']].groupby('Team').mean().loc['Los Angeles Lakers'].iloc[0], 2),
+        'fifth_lowest': f'{sorted_by_salary["Player"].iloc[4]}, {sorted_by_salary["Team"].iloc[4]}',
         'duplicates': len(np.unique(np.array(list(map(lambda name : name.split()[1], salary['Player'].to_list()))))) != salary.shape[0],
         'total_highest': salary[salary['Team'] == highest_salary_guys_team]['Salary'].sum()
     }
