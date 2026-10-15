@@ -14,11 +14,11 @@ import numpy as np
 
 
 def trick_me():
-    ...
+    return 3
 
 
 def trick_bool():
-    ...
+    return [4, 10, 13]
 
 
 # ---------------------------------------------------------------------
@@ -27,7 +27,13 @@ def trick_bool():
 
 
 def population_stats(df):
-    ...
+    new = pd.DataFrame()
+
+    new['num_nonnull'] = df.isna().sum()
+    new['prop_nonnull'] = df.notna().sum() / df.shape[0]
+    new['num_distinct'] = df.nunique()
+    new['prop_distinct'] = df.nunique() / df.shape[0]
+    return new
 
 
 # ---------------------------------------------------------------------
@@ -36,7 +42,11 @@ def population_stats(df):
 
 
 def most_common(df, N=10):
-    ...
+    r = pd.DataFrame()
+    for col in df.columns:
+        r[f'{col}_values'] = df[col].value_counts().index[:N]
+        r[f"{col}_counts"] = df[col].value_counts().values[:N]
+    return r
 
 
 # ---------------------------------------------------------------------
@@ -45,7 +55,13 @@ def most_common(df, N=10):
 
 
 def super_hero_powers(powers):
-    ...
+    r = []
+    mask = powers.drop(columns='hero_names').sum(axis=1) == 1
+
+    r.append(powers.set_index('hero_names').sum(axis=1).sort_values(ascending=False).head(1).index[0])
+    r.append(powers[powers['Flight'] == True].drop(columns='Flight').set_index('hero_names').sum(axis=0).sort_values(ascending=False).head(1).index[0])
+    r.append(powers[mask].drop(columns='hero_names').sum(axis=0).sort_values(ascending=False).head(1).index[0])
+    return r
 
 
 # ---------------------------------------------------------------------
@@ -54,7 +70,8 @@ def super_hero_powers(powers):
 
 
 def clean_heroes(heroes):
-    ...
+    cleaned = heroes.replace('-', np.nan).replace(-99, np.nan)
+    return cleaned
 
 
 # ---------------------------------------------------------------------
@@ -63,7 +80,7 @@ def clean_heroes(heroes):
 
 
 def super_hero_stats():
-    ...
+    return ['Fin Fang Foom', 'DC Comics', 'bad', 'Marvel Comics', 'NBC - Heroes', 'Groot']
 
 
 # ---------------------------------------------------------------------
@@ -72,8 +89,41 @@ def super_hero_stats():
 
 
 def clean_universities(df):
-    ...
+    df = df.copy()
+    df['institution'].replace('\n', ', ')
+    df['broad_impact'].map(int)
+    df['nation'] = df['national_rank'].apply(
+        lambda x: 
+        'United States' if x.split(', ')[0] == 'USA' else 
+        'United Kingdom' if x.split(', ')[0] == 'UK' else 
+        'Czech Republic' if x.split(', ')[0] == 'Czechia' 
+        else x.split(', ')[0])
+    df['national_rank_cleaned'] = df['national_rank'].apply(lambda x: x.split(', ')[1])
+    df.drop(columns=['national_rank'], inplace=True)
+    df['is_r1_public'] = (df['control'].apply(lambda x: False if pd.isna(x) else 'Public' in x )) & (df[['control', 'city', 'state']].notna().all(axis=1))
+
+    return df
 
 def university_info(cleaned):
-    ...
+    r = []
+    states_more_than_3 = cleaned.groupby('state').count().sort_values(by='institution', ascending=False).index
+    top_100 = cleaned[cleaned['world_rank'] <= 100]
+    not_r1 = cleaned[~cleaned['is_r1_public']]
+    top_1_in_nation = cleaned[cleaned['national_rank_cleaned'] == '1']
+
+    r.append(
+        cleaned[cleaned['state'].isin(states_more_than_3)][['state','score']].groupby('state').mean().sort_values(by='score', ascending=True).head(1).index[0]
+    )
+    r.append(
+        top_100[top_100['quality_of_faculty'] <= 100].shape[0]/top_100.shape[0]
+    )
+    r.append(
+        (not_r1[['state', 'is_r1_public']].groupby('state').mean() >= 0.5).shape[0]
+    )
+    r.append(
+        top_1_in_nation.sort_values(by='score', ascending=True)['institution'].iloc[0]
+    )
+    return r
+
+
 
