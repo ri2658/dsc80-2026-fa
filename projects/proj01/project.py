@@ -199,10 +199,20 @@ def letter_proportions(total):
 
 
 def raw_redemption(final_breakdown, question_numbers):
-    ...
+    redemption_only = final_breakdown.iloc[:, question_numbers]
+    out_of = sum([float(x.split('(')[1].split(' pts)')[0]) for x in redemption_only.columns])
+
+    score = redemption_only.sum(axis=1)/out_of
+
+    new = final_breakdown[['PID']].copy()
+    new['Raw Redemption Score'] = score
+    return new
     
 def combine_grades(grades, raw_redemption_scores):
-    ...
+
+    grades_new = grades.merge(raw_redemption_scores, how='left', on='PID')
+
+    return grades_new
 
 
 # ---------------------------------------------------------------------
@@ -211,10 +221,28 @@ def combine_grades(grades, raw_redemption_scores):
 
 
 def z_score(ser):
-    ...
+
+    return (ser - np.mean(ser))/np.std(ser)
     
 def add_post_redemption(grades_combined):
-    ...
+    midterms = grades_combined['Midterm']
+    max_points = grades_combined['Midterm - Max Points'].values[0]
+    midterm_grade = (midterms.fillna(0)/max_points)#.mean(axis=1)
+
+    new = grades_combined.copy()
+    new['Midterm Score Pre-Redemption'] = midterm_grade
+    midterm_pre_mean = np.mean(midterm_grade)
+    midterm_pre_std = np.std(midterm_grade)
+
+    new['midterm_pre_redemption_normalized'] = z_score(midterm_grade)
+    new['midterm_post_redemption_normalized'] = z_score(grades_combined['Raw Redemption Score'])
+
+    new['Midterm Score Post-Redemption'] = new.apply(
+        lambda row: min(1, midterm_pre_mean + row['midterm_post_redemption_normalized']*midterm_pre_std) if row['midterm_post_redemption_normalized'] > row['midterm_pre_redemption_normalized'] else row['Midterm Score Pre-Redemption'], axis=1
+        )
+
+    new = new.drop(columns=['midterm_pre_redemption_normalized', 'midterm_post_redemption_normalized'])
+    return new
 
 
 # ---------------------------------------------------------------------
@@ -223,10 +251,32 @@ def add_post_redemption(grades_combined):
 
 
 def total_points_post_redemption(grades_combined):
-    ...
+    grades_combined = add_post_redemption(grades_combined)
+    
+    project_grade = projects_total(grades_combined)
+    lab_grade = lab_total(process_labs(grades_combined))
+
+    names = get_assignment_names(grades_combined)
+    checkpoints = grades_combined[names['checkpoint']]
+    checkpoints_max_points = list(map(lambda name: name + ' - Max Points', checkpoints))
+    discussions = grades_combined[names['disc']]
+    discussions_max_points = list(map(lambda name: name + ' - Max Points', discussions))
+    
+    finals = grades_combined[names['final']]
+    finals_max_points = list(map(lambda name: name + ' - Max Points', finals))
+
+    checkpoint_grade = (checkpoints.fillna(0)/grades[checkpoints_max_points].values).mean(axis=1)
+    discussion_grade = (discussions.fillna(0)/grades[discussions_max_points].values).mean(axis=1)
+    midterm_grade = grades_combined['Midterm Score Post-Redemption']
+    finals_grade = (finals.fillna(0)/grades[finals_max_points].values).mean(axis=1)
+
+    final_grade = (0.2 * lab_grade) + (0.3 * project_grade) + (0.025 * checkpoint_grade) + (0.025 * discussion_grade) + (0.15 * midterm_grade) + (0.3 * finals_grade)
+
+    return final_grade
         
 def proportion_improved(grades_combined):
-    ...
+    return sum(final_grades(total_points_post_redemption(grades_combined)) != final_grades(total_points(grades_combined)))/grades.shape[0]
+
 
 
 # ---------------------------------------------------------------------
