@@ -265,17 +265,17 @@ def total_points_post_redemption(grades_combined):
     finals = grades_combined[names['final']]
     finals_max_points = list(map(lambda name: name + ' - Max Points', finals))
 
-    checkpoint_grade = (checkpoints.fillna(0)/grades[checkpoints_max_points].values).mean(axis=1)
-    discussion_grade = (discussions.fillna(0)/grades[discussions_max_points].values).mean(axis=1)
+    checkpoint_grade = (checkpoints.fillna(0)/grades_combined[checkpoints_max_points].values).mean(axis=1)
+    discussion_grade = (discussions.fillna(0)/grades_combined[discussions_max_points].values).mean(axis=1)
     midterm_grade = grades_combined['Midterm Score Post-Redemption']
-    finals_grade = (finals.fillna(0)/grades[finals_max_points].values).mean(axis=1)
+    finals_grade = (finals.fillna(0)/grades_combined[finals_max_points].values).mean(axis=1)
 
     final_grade = (0.2 * lab_grade) + (0.3 * project_grade) + (0.025 * checkpoint_grade) + (0.025 * discussion_grade) + (0.15 * midterm_grade) + (0.3 * finals_grade)
 
     return final_grade
         
 def proportion_improved(grades_combined):
-    return sum(final_grades(total_points_post_redemption(grades_combined)) != final_grades(total_points(grades_combined)))/grades.shape[0]
+    return sum(final_grades(total_points_post_redemption(grades_combined)) != final_grades(total_points(grades_combined)))/grades_combined.shape[0]
 
 
 
@@ -285,25 +285,33 @@ def proportion_improved(grades_combined):
 
 
 def section_most_improved(grades_analysis):
-    ...
+    copy = grades_analysis.copy()
+    copy['Improved'] = grades_analysis.apply(lambda row: row['Letter Grade Post-Redemption'] != row['Letter Grade Pre-Redemption'], axis=1)
+
+    return copy[['Section', 'Improved']].groupby('Section').mean()['Improved'].sort_values(ascending=False).index[0]
     
 def top_sections(grades_analysis, t, n):
-    ...
+    above_t = grades_analysis[(grades_analysis['Final'].fillna(0))/grades_analysis['Final - Max Points'] > t].groupby('Section').count()
+
+    return above_t[above_t.iloc[:,0] >= n].index.to_numpy()
 
 
 # ---------------------------------------------------------------------
 # QUESTION 12
 # ---------------------------------------------------------------------
 
-
 def rank_by_section(grades_analysis):
-    ...
+    def rank_section(one_section):
+        copy = one_section.copy()
+
+        copy = copy.sort_values(by = 'Total Points Post-Redemption', ascending=False)
+        copy['Section Rank'] = np.arange(1, one_section.shape[0] + 1)
+
+        return copy
 
 
-
-
-
-
+    ranked = grades_analysis.groupby('Section').apply(rank_section).drop(columns='Section').reset_index()[['Section', 'Section Rank', 'PID']]
+    return ranked.pivot(index='Section Rank', columns='Section', values='PID').fillna('')
 
 # ---------------------------------------------------------------------
 # QUESTION 13
@@ -311,4 +319,12 @@ def rank_by_section(grades_analysis):
 
 
 def letter_grade_heat_map(grades_analysis):
-    ...
+    letter_grades_by_section = grades_analysis.groupby(['Letter Grade Post-Redemption', 'Section']).count().iloc[:, [0]].reset_index()
+    letter_grades_vs_sections = letter_grades_by_section.pivot(index='Letter Grade Post-Redemption', columns='Section', values='PID')
+
+    fig = px.imshow(
+        letter_grades_vs_sections, 
+        title='Distribution of Letter Grades by Section', 
+        color_continuous_scale='deep',
+    )
+    return fig
