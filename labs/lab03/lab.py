@@ -99,14 +99,31 @@ def check_credit(df):
 
 
 def most_popular_procedure(pets, procedure_history):
-    ...
+    df = pd.merge(pets, procedure_history, on='PetID')
+
+    return df.groupby('ProcedureType').count().iloc[:,0].sort_values(ascending=False).index[0]
 
 def pet_name_by_owner(owners, pets):
-    ...
+    df = pd.merge(owners, pets, on='OwnerID')
 
+    df['Name_y'] = df['Name_y'].apply(lambda x : [x])
+
+    df = df[['Name_x', 'Surname', 'Name_y']].groupby(['Name_x', 'Surname']).sum()
+    df = df.reset_index().drop(columns='Surname').set_index('Name_x')['Name_y']
+
+    return df.apply(lambda x : x[0] if len(x) == 1 else x)
 
 def total_cost_per_city(owners, pets, procedure_history, procedure_detail):
-    ...
+    procedures = pd.merge(procedure_history, procedure_detail, on=['ProcedureSubCode', 'ProcedureType'])
+    master = owners.merge(pets.merge(procedures, on='PetID', how='left'), on='OwnerID', how='left')
+
+    master = master.rename(columns=
+                  {
+                      'Name_x' : 'Name_pet',
+                      'Name_y' : 'Name_owner',
+                  })
+
+    return master.groupby('City').sum()['Price']
 
 
 # ---------------------------------------------------------------------
