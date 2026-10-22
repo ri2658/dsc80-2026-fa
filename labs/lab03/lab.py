@@ -115,13 +115,31 @@ def total_cost_per_city(owners, pets, procedure_history, procedure_detail):
 
 
 def average_seller(sales):
-    ...
+    return sales.groupby('Name')[['Total']].mean().rename(columns={'Total' : 'Average Sales'})
 
 def product_name(sales):
-    ...
+    return sales.pivot_table(index='Name', columns='Product', values='Total', aggfunc='sum')
 
 def count_product(sales):
-    ...
+    return sales.pivot_table(index=['Product', 'Name'], columns='Date', values='Total', aggfunc='count').fillna(0)
 
 def total_by_month(sales):
-    ...
+    sales = sales.copy()
+
+    sales['Month'] = sales['Date'].apply(
+        lambda x : 
+        'January' if x.split('.')[0] == '01' else
+        'February' if x.split('.')[0] == '02' else
+        'March' if x.split('.')[0] == '03' else
+        'April' if x.split('.')[0] == '04' else
+        'May' if x.split('.')[0] == '05' else
+        'June' if x.split('.')[0] == '06' else
+        'July' if x.split('.')[0] == '07' else
+        'August' if x.split('.')[0] == '08' else
+        'September' if x.split('.')[0] == '09' else
+        'October' if x.split('.')[0] == '10' else
+        'November' if x.split('.')[0] == '11' else
+        'December'
+    )
+
+    return sales.pivot_table(index=['Name', 'Product'], columns='Month', values='Total', aggfunc='sum').fillna(0)

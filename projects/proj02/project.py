@@ -37,7 +37,17 @@ warnings.filterwarnings("ignore")
 
 
 def clean_loans(loans):
-    ...
+    loans = loans.copy()
+    loans['emp_title'] = loans['emp_title'].apply(lambda x: x.lower().strip())
+    loans['emp_title'] = loans['emp_title'].apply(lambda x: 'registered nurse' if x == 'rn' else x)
+    loans['issue_d'] = pd.to_datetime(loans['issue_d'])
+    loans['term'] = loans['term'].apply(lambda x : int(x.split()[0]))
+    loans['term_end'] = loans.apply(
+        lambda row: row['issue_d'] + pd.DateOffset(months=row['term']),
+        axis=1
+        )
+
+    return loans
 
 
 # ---------------------------------------------------------------------
@@ -46,7 +56,14 @@ def clean_loans(loans):
 
 
 def correlations(df, pairs):
-    ...
+
+    r_coeffs = []
+    for pair in pairs:
+        x = df[pair[0]]
+        y = df[pair[1]]
+
+        r_coeffs.append(np.corrcoef(x, y)[0, 1])
+    return pd.Series(r_coeffs)
 
 
 # ---------------------------------------------------------------------
@@ -55,7 +72,24 @@ def correlations(df, pairs):
 
 
 def create_boxplot(loans):
-    ...
+    loans = loans.copy()
+
+    edges = [580, 670, 740, 800, 850]
+    group_names = ['[580, 670)', '[670, 740)', '[740, 800)', '[800, 850)']
+
+    loans['Credit Score Range'] = pd.cut(loans['fico_range_low'], bins = edges, labels = group_names)
+    
+    loans = loans.rename(columns={'int_rate' : 'Interest Rate (%)', 'term' : 'Loan Length (Months)'})
+
+    fig = px.box(
+        loans,
+        x = "Credit Score Range", 
+        y = "Interest Rate (%)", 
+        color = 'Loan Length (Months)',
+        title = 'Interest Rate vs. Credit Score'
+    )
+
+    return fig
 
 
 # ---------------------------------------------------------------------
