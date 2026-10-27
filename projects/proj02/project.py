@@ -160,6 +160,7 @@ def tax_owed(income, brackets):
 
 
 def clean_state_taxes(state_taxes_raw): 
+    state_taxes_raw = state_taxes_raw.dropna(how='all')
     mask = state_taxes_raw['State'].str.contains('\(').fillna(False)
     state_taxes_raw.loc[mask, 'State'] = np.nan
     state_taxes_raw = state_taxes_raw.ffill()
@@ -174,7 +175,14 @@ def clean_state_taxes(state_taxes_raw):
 
 
 def state_brackets(state_taxes):
-    ...
+    return (
+        state_taxes
+        .groupby('State')
+        .apply(
+            lambda df : list(zip(df['Rate'], df['Lower Limit']))
+        )
+        .to_frame('bracket_list')
+    )
     
 def combine_loans_and_state_taxes(loans, state_taxes):
     # Start by loading in the JSON file.
@@ -185,7 +193,19 @@ def combine_loans_and_state_taxes(loans, state_taxes):
         state_mapping = json.load(f)
         
     # Now it's your turn:
-    ...
+
+    tax_brackets = state_brackets(state_taxes)
+    tax_brackets.index = tax_brackets.index.map(state_mapping)
+
+    return (
+        loans
+        .merge(
+            tax_brackets,
+            left_on = 'addr_state',
+            right_index = True
+        )
+        .rename(columns = {'addr_state' : 'State'})
+    )
 
 
 # ---------------------------------------------------------------------
@@ -203,7 +223,27 @@ def find_disposable_income(loans_with_state_taxes):
      (0.35, 231251),
      (0.37, 578125)
     ]
-    ...
+
+    df = loans_with_state_taxes.copy()
+
+    df['federal_tax_owed'] = (
+        df['annual_inc']
+        .apply(
+            lambda income : tax_owed(income, FEDERAL_BRACKETS)
+        )
+    )
+
+    df['state_tax_owed'] = (
+        df
+        .apply(
+            lambda row : tax_owed(row['annual_inc'], row['bracket_list']),
+            axis=1
+        )
+    )
+
+    df['disposable_income'] = df['annual_inc'] - df['federal_tax_owed'] - df['state_tax_owed']
+
+    return df
 
 
 # ---------------------------------------------------------------------
