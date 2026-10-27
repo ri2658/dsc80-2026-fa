@@ -148,7 +148,10 @@ def other_missingness():
 
 
 def tax_owed(income, brackets):
-    ...
+    lowers = np.array([tup[1] for tup in brackets])
+    rates = np.array([tup[0] for tup in brackets])
+
+    return np.sum(np.maximum(income-lowers, 0)*np.diff(rates, prepend=0))
 
 
 # ---------------------------------------------------------------------
@@ -157,8 +160,13 @@ def tax_owed(income, brackets):
 
 
 def clean_state_taxes(state_taxes_raw): 
-    ...
+    mask = state_taxes_raw['State'].str.contains('\(').fillna(False)
+    state_taxes_raw.loc[mask, 'State'] = np.nan
+    state_taxes_raw = state_taxes_raw.ffill()
+    state_taxes_raw['Rate'] = state_taxes_raw['Rate'].apply(lambda x : 0.00 if x == 'none' else round(float(x.strip('%'))/100, 2))
+    state_taxes_raw['Lower Limit'] = state_taxes_raw['Lower Limit'].apply(lambda x : int(x.strip('$').replace(',', '')))
 
+    return state_taxes_raw
 
 # ---------------------------------------------------------------------
 # QUESTION 7

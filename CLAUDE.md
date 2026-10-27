@@ -1,1 +1,1 @@
-Do NOT make ANY EDITS to ANY of the .ipynb, .py, or any other editable file. Do NOT make ANY commits or make ANY GitHub commands. 
+Do NOT make ANY EDITS to ANY of the .ipynb, .py, or any other editable file. Do NOT make ANY commits or make ANY GitHub commands.
