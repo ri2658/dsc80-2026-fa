@@ -57,13 +57,12 @@ def clean_loans(loans):
 
 def correlations(df, pairs):
 
-    r_coeffs = []
-    for pair in pairs:
-        x = df[pair[0]]
-        y = df[pair[1]]
+    r_coeffs, names = [], []
+    for col1, col2, in pairs:
+        r_coeffs.append(np.corrcoef(df[col1], df[col2])[0, 1])
+        names.append(f'r_{col1}_{col2}')
 
-        r_coeffs.append(np.corrcoef(x, y)[0, 1])
-    return pd.Series(r_coeffs)
+    return pd.Series(r_coeffs, index=names)
 
 
 # ---------------------------------------------------------------------
@@ -77,16 +76,20 @@ def create_boxplot(loans):
     edges = [580, 670, 740, 800, 850]
     group_names = ['[580, 670)', '[670, 740)', '[740, 800)', '[800, 850)']
 
-    loans['Credit Score Range'] = pd.cut(loans['fico_range_low'], bins = edges, labels = group_names)
+    loans['Credit Score Range'] = pd.cut(loans['fico_range_low'], bins = edges, labels = group_names, right = False).astype(str)
     
     loans = loans.rename(columns={'int_rate' : 'Interest Rate (%)', 'term' : 'Loan Length (Months)'})
+    loans['Loan Length (Months)'] = loans['Loan Length (Months)'].astype(str)
 
     fig = px.box(
         loans,
         x = "Credit Score Range", 
         y = "Interest Rate (%)", 
         color = 'Loan Length (Months)',
-        title = 'Interest Rate vs. Credit Score'
+        title = 'Interest Rate vs. Credit Score',
+        category_orders = {'Credit Score Range' : group_names,
+                           'Loan Length (Months)' : ['36', '60']},
+        color_discrete_map = {'36' : 'purple', '60' : 'gold'}
     )
 
     return fig
@@ -98,13 +101,45 @@ def create_boxplot(loans):
 
 
 def ps_test(loans, N):
-    ...
+    copy = loans.copy()
+
+    w_desc_mean = copy[copy['desc'].notna()]['int_rate'].mean()
+    wo_desc_mean = copy[~copy['desc'].notna()]['int_rate'].mean()
+    stat = w_desc_mean - wo_desc_mean
+
+    results = np.empty(N)
+
+    has_desc = copy['desc'].notna().to_numpy()
+    for i in range(N):
+        has_desc = np.random.permutation(has_desc)
+        sim_w_desc_mean = copy[has_desc]['int_rate'].mean()
+        sim_wo_desc_mean = copy[~has_desc]['int_rate'].mean()
+        results[i] =  (sim_w_desc_mean - sim_wo_desc_mean)
+
+    return np.mean(results >= stat)
+        
+
     
 def missingness_mechanism():
-    ...
+    # My p value was for 5000 repititions was 0.0182. This is much smaller than
+    # 0.05, the accepted value for the threshold to reject the null hypothesis.
+    # This indicates that random chance alone cannot explain the observed 
+    # discrepancy between rates with and without descriptions. As such, it is
+    # possible that the interest rates column may shed some insight on the 
+    # missingness of "description".
+
+    return 2
+
     
 def other_missingness():
-    ...
+    # The other column with missing values is 'mths_since_last_delinq', or 
+    # presumably "Months Since Last Delinquency". We can immediately rule out 
+    # Missing by Design because no other column determines it. The most logical
+    # answer is Missing Not at Random because it is possible for a person to 
+    # have simply not have had a delinquency in the past. However, we do note 
+    # that by scanning the rows, individuals with no deliquency seem to have
+    # higher FICO scores. Nonetheless, MNAR is the best answer here.
+    return 2
 
 
 # ---------------------------------------------------------------------
