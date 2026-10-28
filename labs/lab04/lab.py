@@ -146,7 +146,13 @@ def color_p_value(data, col='orange'):
 
 
 def ordered_colors():
-    ...
+    return [
+        ('yellow', np.float64(0.0)),
+        ('orange', np.float64(0.044)),
+        ('red', np.float64(0.243)),
+        ('green', np.float64(0.473)),
+        ('purple', np.float64(0.977))
+    ]
 
 
 # ---------------------------------------------------------------------
@@ -156,7 +162,8 @@ def ordered_colors():
 
     
 def same_color_distribution():
-    ...
+
+    return (0.009, 'Reject')
 
 
 # ---------------------------------------------------------------------
@@ -165,4 +172,10 @@ def same_color_distribution():
 
 
 def perm_vs_hyp():
-    ...
+    return [
+        'H',
+        'P',
+        'P',
+        'H',
+        'P'
+    ]
