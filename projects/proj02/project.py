@@ -252,7 +252,19 @@ def find_disposable_income(loans_with_state_taxes):
 
 
 def aggregate_and_combine(loans, keywords, quantitative_column, categorical_column):
-    ...
+    
+    per_group = {}
+    overall = []
+
+    for keyword in keywords:
+        filtered = loans[loans['emp_title'].str.contains(keyword)]
+        col_name = f'{keyword}_mean_{quantitative_column}'
+        per_group[col_name] = filtered.groupby(categorical_column)[quantitative_column].mean()
+        overall.append(filtered[quantitative_column].mean())
+    
+    out = pd.concat(per_group, axis=1)
+    out.loc['Overall'] = overall
+    return out
 
 
 # ---------------------------------------------------------------------
