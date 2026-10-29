@@ -273,12 +273,24 @@ def aggregate_and_combine(loans, keywords, quantitative_column, categorical_colu
 
 
 def exists_paradox(loans, keywords, quantitative_column, categorical_column):
-    ...
+    agg = aggregate_and_combine(loans, keywords, quantitative_column, categorical_column)
+    diffs = (agg.iloc[:-1, 0] - agg.iloc[:-1, 1])
+    overall = (agg.iloc[-1, 0] - agg.iloc[-1, 1])
+    return bool(
+        (
+            (diffs > 0).all() and overall < 0
+        ) or 
+        (
+            (diffs < 0).all() and overall > 0
+        )
+    )
+
     
 def paradox_example(loans):
     return {
         'loans': loans,
-        'keywords': [..., ...],
-        'quantitative_column': ...,
-        'categorical_column': ...
+        'keywords': ['analyst', 'software engineer'],
+        'quantitative_column': 'loan_amnt',
+        'categorical_column': 'home_ownership'
     }
+
