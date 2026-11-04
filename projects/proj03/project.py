@@ -15,8 +15,19 @@ import time
 
 
 def get_book(url):
-    ...
+    time.sleep(0.5)
+    res = requests.get(url)
+    html_text = res.text
 
+    start_keyword = '*** START OF THE PROJECT GUTENBERG EBOOK BEOWULF: AN ANGLO-SAXON EPIC POEM ***'
+    end_keyword = '*** END OF THE PROJECT GUTENBERG EBOOK BEOWULF: AN ANGLO-SAXON EPIC POEM ***'
+
+    pattern = rf"{re.escape(start_keyword)}(.*?){re.escape(end_keyword)}"
+    match = re.search(pattern, html_text, re.DOTALL)
+
+    if match:
+        extracted_text = match.group(1).strip()
+        return extracted_text.replace('\r\n', '\n')
 
 # ---------------------------------------------------------------------
 # QUESTION 2

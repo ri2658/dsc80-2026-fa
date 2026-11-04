@@ -61,14 +61,14 @@ def multiple_choice():
 # ---------------------------------------------------------------------
 
 
-
 def first_round():
-    ...
+
+    return [0.1619, 'NR']
 
 
 def second_round():
-    ...
 
+    return [0.0172, 'R', 'D']
 
 # ---------------------------------------------------------------------
 # QUESTION 4
@@ -76,7 +76,17 @@ def second_round():
 
 
 def verify_child(heights):
-    ...
+
+    return pd.Series(
+        {
+            meow : 
+            stats.ks_2samp(
+                heights.loc[~heights[meow].isna(), 'father'],
+                heights.loc[heights[meow].isna(), 'father']
+            ).pvalue
+            for meow in heights.loc[:,'child_95':].columns
+        }
+    )
 
 
 # ---------------------------------------------------------------------
@@ -85,7 +95,10 @@ def verify_child(heights):
 
 
 def cond_single_imputation(new_heights):
-    ...
+    copy = new_heights.copy()
+    copy = copy.assign(quartile = pd.qcut(new_heights['father'], 4))
+    copy['child'] = copy.groupby('quartile')['child'].transform(lambda ser : ser.fillna(ser.mean())) 
+    return copy['child']
 
 
 # ---------------------------------------------------------------------
