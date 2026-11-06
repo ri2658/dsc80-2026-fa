@@ -27,8 +27,7 @@ def after_purchase():
     # 5. MAR because higher-priced items are likely of higher quality and are
     # less likely to displease a customer.
     
-    return ['NMAR', 'MD', 'NMAR', 'MAR', 'MAR']
-
+    return ['NMAR', 'MD', 'MAR', 'NMAR', 'MAR']
 
 # ---------------------------------------------------------------------
 # QUESTION 2
@@ -107,11 +106,21 @@ def cond_single_imputation(new_heights):
 
 
 def quantitative_distribution(child, N):
-    ...
+    counts, bin_edges = np.histogram(child.dropna(), bins=10, density=True)
+    probs = np.diff(bin_edges)*counts
+
+    bins = np.random.choice(len(counts), size=N, p=probs)
+
+    values = np.random.uniform(bin_edges[bins], bin_edges[bins+1])
+
+    return values
 
 
 def impute_height_quant(child):
-    ...
+
+    copy = child.copy()
+    copy.loc[copy.isna()] = quantitative_distribution(copy, copy.isna().sum())
+    return copy
 
 
 # ---------------------------------------------------------------------
@@ -120,4 +129,4 @@ def impute_height_quant(child):
 
 
 def answers():
-    ...
+    return [1, 2, 2, 1], ['reddit.com/robots.txt', 'https://physics.ucsd.edu/robots.txt']
