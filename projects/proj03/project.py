@@ -60,13 +60,15 @@ class UniformLM(object):
         self.mdl = self.train(tokens)
         
     def train(self, tokens):
-        ...
+        return pd.Series(pd.Series(tokens).unique()).value_counts(normalize=True)
     
     def probability(self, words):
-        ...
+        probs = np.array([self.mdl[word] if word in self.mdl.index else 0 for word in words])
+        return float(np.prod(probs))
         
     def sample(self, M):
-        ...
+            mdl_dict = self.mdl.to_dict()
+            return ' '.join(np.random.choice(list(mdl_dict.keys()), size=M, replace=True, p=list(mdl_dict.values())))
 
 
 # ---------------------------------------------------------------------
@@ -75,18 +77,22 @@ class UniformLM(object):
 
 
 class UnigramLM(object):
-    
+
+
     def __init__(self, tokens):
         self.mdl = self.train(tokens)
-    
+        
     def train(self, tokens):
-        ...
+        return pd.Series(tokens).value_counts(normalize=True)
     
     def probability(self, words):
-        ...
+        probs = np.array([self.mdl[word] if word in self.mdl.index else 0 for word in words])
+        return float(np.prod(probs))
         
     def sample(self, M):
-        ...
+            mdl_dict = self.mdl.to_dict()
+            return ' '.join(np.random.choice(list(mdl_dict.keys()), size=M, replace=True, p=list(mdl_dict.values())))
+
 
 
 # ---------------------------------------------------------------------
