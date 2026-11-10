@@ -93,10 +93,30 @@ def scrape_books(k, categories):
 
 
 def stock_history(symbol, year, month):
-    ...
+    start_date = pd.Timestamp(year=year, month=month, day=1)
+    dates = pd.date_range(start=start_date, periods = start_date.days_in_month, freq='D')
+    
+    params = {
+        'symbol': symbol,
+        'from': f'{year}-{month:02d}-01',
+        'to':   f'{year}-{month:02d}-{start_date.days_in_month:02d}',
+        'apikey': 'czHUKml5OxAG78Fwv8ky3RMaX0LCqJ2x'
+    }
+
+    data = requests.get('https://financialmodelingprep.com/stable/historical-price-eod/full', params=params).json()
+    df = pd.DataFrame(data)
+
+    return df
 
 def stock_stats(history):
-    ...
+    price_change = (history.iloc[0]['close'] - history.iloc[-1]['open'])/history.iloc[-1]['open'] * 100
+    dtv = ((history.loc[:, 'high'] + history.loc[:, 'low'])/2 * history.loc[:, 'volume']).sum()
+
+
+    return (
+        f'{price_change:+.2f}%',
+        f'{dtv/1e9:.2f}B'
+    )
 
 
 # ---------------------------------------------------------------------
