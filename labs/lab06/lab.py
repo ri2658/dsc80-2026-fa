@@ -94,7 +94,6 @@ def scrape_books(k, categories):
 
 def stock_history(symbol, year, month):
     start_date = pd.Timestamp(year=year, month=month, day=1)
-    dates = pd.date_range(start=start_date, periods = start_date.days_in_month, freq='D')
     
     params = {
         'symbol': symbol,
@@ -125,4 +124,31 @@ def stock_stats(history):
 
 
 def get_comments(storyid):
-    ...
+    format_url = lambda id : f'https://hacker-news.firebaseio.com/v0/item/{id}.json'
+
+    def dfs(id, visited): 
+        # DSC 40B notes had `adj` (i.e., an adjacency list). I've decided to 
+        # pass the id for `u` so that I can easily find its neighbors (list) 
+        # using u[kids] where requests.get(format_url(id)).json()
+        
+        comment = requests.get(format_url(id)).json()
+        if comment.get('dead', False) == True:
+            return
+        visited.append(id)
+        for child_id in comment.get('kids', []):
+            dfs(child_id, visited)
+            
+    def dfs_all(id):
+        request = requests.get(format_url(id)).json()
+        visited = list()
+
+        for child_id in request.get('kids', []):
+            if child_id not in visited:
+                dfs(child_id, visited)
+        return visited
+
+    comments = dfs_all(storyid)
+    df = [requests.get(format_url(id)).json() for id in comments]
+    df = pd.DataFrame(df)
+    df['time'] = pd.to_datetime(df['time'], unit='s')
+    return df.loc[:, ['id', 'by', 'text', 'parent', 'time']]
