@@ -121,10 +121,30 @@ class NGramLM(object):
             self.prev_mdl = NGramLM(N-1, tokens)
 
     def create_ngrams(self, tokens):
-        ...
+        if len(tokens) == self.N:
+            return tokens
+
+        n_grams = []
+
+        i=0
+        while i+self.N <= len(tokens):
+            n_grams.append(tuple(tokens[i:i+self.N]))
+            i += 1
+
+        return n_grams
         
     def train(self, ngrams):
-        ...
+        df = pd.DataFrame()
+        df['ngram'] = pd.Series(ngrams)
+        df['n1gram'] = df['ngram'].apply(lambda tup : tup[:-1])
+
+        ngram_counts = df.groupby('ngram').transform('size')
+        n1gram_counts = df.groupby('n1gram').transform('size')
+
+        df['prob'] = ngram_counts/n1gram_counts
+        df = df.drop_duplicates().sort_values('prob').reset_index(drop=True)
+
+        return df
     
     def probability(self, words):
         ...
