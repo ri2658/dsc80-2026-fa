@@ -122,7 +122,7 @@ class NGramLM(object):
 
     def create_ngrams(self, tokens):
         if len(tokens) == self.N:
-            return tokens
+            return [tuple(tokens)]
 
         n_grams = []
 
@@ -147,8 +147,41 @@ class NGramLM(object):
         return df
     
     def probability(self, words):
-        ...
-    
+        warmup = words[:self.N-1]
+        lookup = self.mdl.set_index('ngram')['prob'].to_dict()
+
+        prob = self.prev_mdl.probability(warmup)
+
+        for ngram in self.create_ngrams(words):
+            prob *= lookup.get(ngram, 0)
+
+        return prob
+
+    def next_token(self, context):
+        if len(context) < self.N-1:
+
+            return self.prev_mdl.next_token(context)
+
+        prior = context[-(self.N - 1):]
+        rows = self.mdl.loc[self.mdl['n1gram'].map(lambda tup : tup == prior)]
+
+        if rows.empty:
+            return '\x03'
+
+        choices = rows['ngram'].map(lambda t: t[-1])   # last token of each n-gram
+        probs = rows['prob']
+        
+        return np.random.choice(
+            choices,
+            replace=True,
+            p=probs
+        )
 
     def sample(self, M):
-        ...
+
+        word = ['\x02']
+        for _ in range(M - 1):
+            word.append(self.next_token(tuple(word)))
+        word.append('\x03')
+
+        return ' '.join(word)
