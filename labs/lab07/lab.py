@@ -31,7 +31,7 @@ def match_1(string):
     >>> match_1("1b[#d] _")
     True
     """
-    pattern = ...
+    pattern = r'^.{2}\[.{2}\].*'
 
     # Do not edit following code
     prog = re.compile(pattern)
@@ -58,7 +58,7 @@ def match_2(string):
     >>> match_2("(858) 456-7890b")
     False
     """
-    pattern = ...
+    pattern = r'^\(858\)\s\d{3}-\d{4}$'
 
     # Do not edit following code
     prog = re.compile(pattern)
@@ -85,7 +85,7 @@ def match_3(string):
     >>> match_3(" adf!qe? ")
     False
     """
-    pattern = ...
+    pattern = r'^[\w\s\?]{5,9}\?$'
 
     # Do not edit following code
     prog = re.compile(pattern)
@@ -114,7 +114,7 @@ def match_4(string):
     >>> match_4("$!@$")
     False
     """
-    pattern = ...
+    pattern = r'^\$[^abc\$]*\$[aA]+[bB]+[cC]+$'
 
     # Do not edit following code
     prog = re.compile(pattern)
