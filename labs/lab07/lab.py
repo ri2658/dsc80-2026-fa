@@ -133,7 +133,7 @@ def match_5(string):
     >>> match_5("dsc80+.py")
     False
     """
-    pattern = ...
+    pattern = r'^[a-zA-Z_]\w*\.py$'
 
     # Do not edit following code
     prog = re.compile(pattern)
@@ -154,7 +154,7 @@ def match_6(string):
     >>> match_6("ABCDEF_ABCD")
     False
     """
-    pattern = ...
+    pattern = r'^[a-z]+_[a-z]+$'
 
     # Do not edit following code
     prog = re.compile(pattern)
@@ -173,7 +173,7 @@ def match_7(string):
     >>> match_7("_ncde")
     False
     """
-    pattern = ...
+    pattern = r'^_.*_$'
 
     # Do not edit following code
     prog = re.compile(pattern)
@@ -195,7 +195,7 @@ def match_8(string):
     >>> match_8("ASDJKL9380JKAL")
     True
     """
-    pattern = ...
+    pattern = r'^[^O^i^1]{1,}$'
 
     # Do not edit following code
     prog = re.compile(pattern)
@@ -219,7 +219,7 @@ def match_9(string):
     >>> match_9('TX-32-SAN-4491')
     False
     '''
-    pattern = ...
+    pattern = r'^((CA-\d{2}-(SAN|LAX))|(NY-\d{2}-[A-Z]{3}))-\d{4}$'
 
     # Do not edit following code
     prog = re.compile(pattern)
@@ -227,6 +227,7 @@ def match_9(string):
 
 
 def match_10(string):
+
     '''
     DO NOT EDIT THE DOCSTRING!
     >>> match_10('ABCdef')
@@ -241,7 +242,10 @@ def match_10(string):
     ['bde']
     
     '''
-    ...
+    string = string.lower()
+    string = re.sub(r'[\Wa]', '', string)
+
+    return re.findall(r'...', string)
 
 
 # ---------------------------------------------------------------------
@@ -250,7 +254,19 @@ def match_10(string):
 
 
 def extract_personal(s):
-    ...
+    email_pattern = r'\w+@\w+(?:\.\w+)+'
+    ssn_pattern = r'\d{3}-\d{2}-\d{4}'
+    bitcoin_pattern = r'\w{26,}'
+    street_pattern = r'\d+(?: \w+)+'
+
+    tup = (
+        re.findall(email_pattern , s),
+        re.findall(ssn_pattern, s),
+        re.findall(bitcoin_pattern, s),
+        re.findall(street_pattern, s)
+    )
+
+    return tup
 
 
 # ---------------------------------------------------------------------
@@ -259,11 +275,36 @@ def extract_personal(s):
 
 
 def hashtag_list(tweet_text):
-    ...
+
+    return tweet_text.transform(lambda tweet : re.findall(r'\#(\S+)', tweet))
 
 def most_common_hashtag(tweet_lists):
-    ...
+    most_common = tweet_lists.explode().value_counts().index[0]
+
+    return tweet_lists.transform(lambda hastag_list : most_common if len(hastag_list) > 0 else np.nan)
 
 
 def create_features(tweets):
-    ...
+    tweets = tweets.copy(   )
+
+    def clean(text):
+        text = re.sub(r'\#(\S+)', ' ', text)
+        text = re.sub(r'@\w+', ' ', text)
+        text = re.sub(r'https?://\S+', ' ', text)
+        text = re.sub(r'\bRT\b', ' ', text)
+        text = re.sub(r'[^a-zA-Z0-9\s]', ' ', text)
+        text = text.lower()
+        text = re.sub(r'\s+', ' ', text).strip()
+
+        return text
+
+    tweet_text = tweets['text']
+
+    tweets['num_hashtags'] = hashtag_list(tweet_text).apply(lambda tweet_list : len(tweet_list))
+    tweets['common_hashtag'] = most_common_hashtag(hashtag_list(tweet_text))
+    tweets['num_tags'] = tweet_text.transform(lambda tweet : len(re.findall(r'@\w+', tweet)))
+    tweets['num_links'] = tweet_text.transform(lambda tweet : len(re.findall(r'https?://\S+', tweet)))
+    tweets['is_retweet'] = tweet_text.transform(lambda tweet : bool(re.findall(r'\bRT\b', tweet)))
+    tweets['text'] = tweet_text.transform(lambda tweet : clean(tweet))
+
+    return tweets
