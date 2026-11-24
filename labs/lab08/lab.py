@@ -20,7 +20,7 @@ warnings.filterwarnings('ignore')
 
 
 def best_transformation():
-    ...
+    return 1
 
 
 # ---------------------------------------------------------------------
@@ -30,8 +30,42 @@ def best_transformation():
 
 
 def create_ordinal(df):
-    ...
 
+    map_list = [
+        {
+        'Fair' : 0,
+        'Good' : 1,
+        'Very Good' : 2,
+        'Premium' : 3,
+        'Ideal' : 4
+        },
+        {
+            'J' : 0,
+            'I' : 1,
+            'H' : 2,
+            'G' : 3,
+            'F' : 4,
+            'E' : 5,
+            'D' : 6
+        },
+        {
+            'I1' : 0,
+            'SI2' : 1,
+            'SI1' : 2,
+            'VS2' : 3,
+            'VS1' : 4,
+            'VVS2' : 5,
+            'VVS1' : 6,
+            'IF' : 7
+        }
+    ]
+
+    new = pd.DataFrame()
+
+    for i, column in enumerate(['cut', 'color', 'clarity']):
+        new[f'ordinal_{column}'] = df[column].map(map_list[i])
+
+    return new
 
 # ---------------------------------------------------------------------
 # QUESTION 3
