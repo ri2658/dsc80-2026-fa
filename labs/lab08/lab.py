@@ -28,7 +28,6 @@ def best_transformation():
 # ---------------------------------------------------------------------
 
 
-
 def create_ordinal(df):
 
     map_list = [
@@ -72,13 +71,23 @@ def create_ordinal(df):
 # ---------------------------------------------------------------------
 
 
-
 def create_one_hot(df):
-    ...
+    new = pd.DataFrame()
 
+    for column in ['cut', 'color', 'clarity']:
+        for i, subcolumn in enumerate(df[column].unique()):
+            new[f'one_hot_{column}_{subcolumn}'] = (df[column] == subcolumn).astype(int)
+
+    return new
 
 def create_proportions(df):
-    ...
+    new = pd.DataFrame()
+    ordinals = create_ordinal(df)
+
+    for column in ['cut', 'color', 'clarity']:
+            new[f'proportion_{column}'] = ordinals[f'ordinal_{column}'].map(ordinals[f'ordinal_{column}'].value_counts(normalize=True))
+
+    return new
 
 
 # ---------------------------------------------------------------------
@@ -87,17 +96,30 @@ def create_proportions(df):
 
 
 def create_quadratics(df):
-    ...
+    quantitative_variables = ['carat', 'depth', 'table', 'x', 'y', 'z']
 
+    return pd.DataFrame(
+        {
+            f'{combination[0]} * {combination[1]}' : 
+            df[combination[0]].astype(float)*df[combination[1]].astype(float)
+            for combination in itertools.combinations(quantitative_variables, 2)
+        }
+    )
 
 # ---------------------------------------------------------------------
 # QUESTION 5
 # ---------------------------------------------------------------------
 
 
-
 def comparing_performance():
-    ...
+    return [
+        0.8493305264354858, 
+        1548.5331930613174,
+        'x',
+        'carat * x',
+        'ordinal_color',
+        1434.8400089047336
+    ]
 
 
 # ---------------------------------------------------------------------
