@@ -134,12 +134,22 @@ class TransformDiamonds(object):
         
     # Question 6.1
     def transform_carat(self, data):
-        ...
+        binarizer = Binarizer(threshold=1)
+
+        return binarizer.fit_transform(data['carat'].to_numpy().reshape(-1,1))
     
     # Question 6.2
     def transform_to_quantile(self, data):
-        ...
+        qbinarizer = QuantileTransformer(n_quantiles=100)
+
+        return qbinarizer.fit_transform(data[['carat']])
     
     # Question 6.3
     def transform_to_depth_pct(self, data):
-        ...
+    
+        def depth_pct(df):
+            return 100 * (2*df.loc[:, 'z']/(df.loc[:, 'x']+df.loc[:, 'y']))
+
+        transform = FunctionTransformer(func = depth_pct)
+
+        return transform.fit_transform(data[['x', 'y', 'z']])
